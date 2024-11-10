@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useWeb3Context } from "@/context/Web3Provider";
 import { getSlicedAddress } from "@/utils";
 import { AlbumIcon, BookOpen, StarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -135,22 +136,32 @@ const ProjectItem = () => {
 };
 
 const SidebarContent = () => {
+  const {
+    state: { isAuthenticated, address },
+  } = useWeb3Context();
   return (
     <>
-      <Avatar className="w-80 h-80">
-        <AvatarImage src="https://github.com/shadcn.png" alt="shadcn" />
+      <Avatar className="w-80 h-80 border">
+        <AvatarImage
+          src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${
+            address ? "shadcn" : "Vivian"
+          }`}
+          alt="shadcn"
+        />
         <AvatarFallback>CN</AvatarFallback>
       </Avatar>
       <div className="mt-5"></div>
       <h3 className="font-bold">Wallet Address</h3>
       <div className="flex items-center gap-2 mt-2">
-        <p className="text-sm">
-          {getSlicedAddress("0x41a9dc633faFd6cfA50107eD7040a1c39b5e1319")}
-        </p>
-        <CopyToClipboardBtn
-          text="0x41a9dc633faFd6cfA50107eD7040a1c39b5e1319"
-          customToastText="Wallet Address Copied to clipboard"
-        />
+        {isAuthenticated && (
+          <>
+            <p className="text-sm">{getSlicedAddress(address!)}</p>
+            <CopyToClipboardBtn
+              text={address!}
+              customToastText="Wallet Address Copied to clipboard"
+            />
+          </>
+        )}
       </div>
       <div className="mt-5"></div>
       <h3 className="font-bold">Achievements</h3>

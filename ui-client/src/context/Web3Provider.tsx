@@ -17,7 +17,7 @@ const Web3ContextProvider: FC<IProps> = ({ children }) => {
   const { connectWallet, disconnectWallet, state } = useWeb3Provider();
 
   return (
-    <Web3Context.Provider value={{ connectWallet, disconnectWallet, state }}>
+    <Web3Context.Provider value={{  connectWallet, disconnectWallet, state }}>
       {children}
     </Web3Context.Provider>
   );

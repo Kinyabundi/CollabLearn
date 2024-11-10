@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Input } from "@/components/ui/input";
 import { Button } from '@/components/ui/button';
@@ -6,8 +6,13 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BookCheck, Lock } from 'lucide-react';
 import { ABI } from '@/abi/projectABI';
+import { toast } from 'sonner';
+import { useWeb3Context } from '@/context/Web3Provider';
+
+const MINIMUM_STAKE = ethers.parseEther("0.01"); // 0.01 ETH as minimum stake
 
 const NewProject = () => {
+  const { state } = useWeb3Context();
   const [formData, setFormData] = useState({
     projectName: '',
     description: '',
@@ -16,54 +21,81 @@ const NewProject = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-// interface FormData {
-//     projectName: string;
-//     description: string;
-//     visibility: string;
-//     areaOfStudy: string;
-// }
+  interface InputChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
 
-interface InputChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
-
-const handleInputChange = (e: InputChangeEvent) => {
+  const handleInputChange = (e: InputChangeEvent) => {
     const { id, value } = e.target;
     setFormData(prev => ({
-        ...prev,
-        [id]: value
+      ...prev,
+      [id]: value
     }));
-};
+  };
 
-const handleVisibilityChange = (value: string) => {
+  const handleVisibilityChange = (value: string) => {
     setFormData(prev => ({
-        ...prev,
-        visibility: value
+      ...prev,
+      visibility: value
     }));
-};
+  };
 
   const createProject = async () => {
     try {
+      // if (!state.isConnected || !state.address) {
+      //   toast.error('Please connect your wallet first');
+      //   return;
+      // }
+
+      if (!formData.projectName || !formData.description) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
       setIsLoading(true);
       
-      // Get provider and signer
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       
-    
-      // Replace with your deployed contract address
+      // Get the network
+      const network = await provider.getNetwork();
+      console.log('Current Network:', network);
+
       const contractAddress = "0xBe4A130015b50e2ea3Db14ED0516319B9fEac829";
-      
       const contract = new ethers.Contract(contractAddress, ABI, signer);
-      
-      // Create project transaction
-      const tx = await contract.createProject(
-        formData.projectName,
-        formData.description,
-        formData.visibility === 'private',
-        formData.areaOfStudy
+
+      // Generate a mock IPFS hash (in production, you'd upload to IPFS first)
+      const mockIpfsHash = "QmXyZ..."; // Replace with actual IPFS hash in production
+
+      // Log the parameters we're about to send
+      console.log('Creating research with params:', {
+        title: formData.projectName,
+        ipfsHash: mockIpfsHash,
+        requiredStake: MINIMUM_STAKE,
+        owner: state.address
+      });
+
+      // First check if the connected account is the owner
+      const contractOwner = await contract.owner();
+      console.log('Contract owner:', contractOwner);
+      console.log('Connected address:', state.address);
+
+      if (!state.address || contractOwner.toLowerCase() !== state.address.toLowerCase()) {
+        toast.error('Only the contract owner can create research projects');
+        return;
+      }
+
+      // Create research transaction
+      const tx = await contract.createResearch(
+        formData.projectName,         
+        mockIpfsHash,                 
+        MINIMUM_STAKE,                
+        state.address                
       );
       
+      console.log('Transaction sent:', tx.hash);
+      
       // Wait for transaction to be mined
-      await tx.wait();
+      const receipt = await tx.wait();
+      console.log('Transaction confirmed:', receipt);
       
       // Clear form after successful creation
       setFormData({
@@ -73,21 +105,31 @@ const handleVisibilityChange = (value: string) => {
         areaOfStudy: ''
       });
       
-      alert('Project created successfully!');
-    } catch (error) {
+      toast.success('Project created successfully!');
+    } catch (error: any) {
       console.error('Error creating project:', error);
-      alert('Failed to create project. Please try again.');
+      
+      // More detailed error logging
+      if (error.reason) {
+        toast.error(`Transaction failed: ${error.reason}`);
+      } else if (error.message) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        toast.error('Failed to create project. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // JSX remains the same as before
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
       <div className="space-y-6 w-full max-w-2xl">
         <div>
           <h2 className="text-2xl font-semibold text-gray-900">Create New Project</h2>
-          <p className="text-sm italic text-gray-600">Required fields are marked with an asterisk (*).</p>
+          <p className="text-sm italic text-gray-600">Required fields are marked with an asterisk (*)</p>
+          <p className="text-sm text-gray-600 mt-2">Minimum stake: 0.01 ETH</p>
         </div>
 
         <div>
@@ -151,7 +193,8 @@ const handleVisibilityChange = (value: string) => {
           disabled={isLoading}
           className="w-full"
         >
-          {isLoading ? 'Creating Project...' : 'Create Project'}
+          {
+           isLoading ? 'Creating Project...' : 'Create Project'}
         </Button>
       </div>
     </div>

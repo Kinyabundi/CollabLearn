@@ -116,7 +116,9 @@ const ProjectItem = () => {
     <div className="py-6 border-y border-gray-300">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-blue-600 font-semibold">premium-converts</h3>
+          <Link to={`/app/view-project/premium-converts`}>
+            <h3 className="text-blue-600 font-semibold hover:underline">premium-converts</h3>
+          </Link>
           <Badge variant={"outline"}>Public</Badge>
         </div>
         <Button variant={"outline"} size={"sm"}>

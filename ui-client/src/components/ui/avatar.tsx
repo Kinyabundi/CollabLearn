@@ -1,7 +1,34 @@
-import * as React from "react"
-import * as AvatarPrimitive from "@radix-ui/react-avatar"
+import * as React from "react";
+import * as AvatarPrimitive from "@radix-ui/react-avatar";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
+import { cva, VariantProps } from "class-variance-authority";
+
+const avatarBadgeVariants = cva(
+  "absolute w-4 h-4 rounded-full bg-background flex items-stretch justify-stretch [&>*]:grow [&>*]:rounded-full",
+  {
+    variants: {
+      position: {
+        bottomLeft: "bottom-0 -left-1",
+        bottomRight: "bottom-0 -right-1",
+        topLeft: "top-0 -left-1",
+        topRight: "top-0 -right-1",
+      },
+    },
+    defaultVariants: {
+      position: "bottomLeft",
+    },
+  }
+);
+
+interface AvatarBadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof avatarBadgeVariants> {
+  children?:
+    | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+    | null
+    | never[];
+}
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
@@ -15,8 +42,8 @@ const Avatar = React.forwardRef<
     )}
     {...props}
   />
-))
-Avatar.displayName = AvatarPrimitive.Root.displayName
+));
+Avatar.displayName = AvatarPrimitive.Root.displayName;
 
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
@@ -27,8 +54,8 @@ const AvatarImage = React.forwardRef<
     className={cn("aspect-square h-full w-full", className)}
     {...props}
   />
-))
-AvatarImage.displayName = AvatarPrimitive.Image.displayName
+));
+AvatarImage.displayName = AvatarPrimitive.Image.displayName;
 
 const AvatarFallback = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Fallback>,
@@ -42,7 +69,14 @@ const AvatarFallback = React.forwardRef<
     )}
     {...props}
   />
-))
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
+));
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
 
-export { Avatar, AvatarImage, AvatarFallback }
+const AvatarBadge = ({ className, position, ...props }: AvatarBadgeProps) => (
+  <div
+    className={cn(avatarBadgeVariants({ position }), className)}
+    {...props}
+  />
+);
+
+export { Avatar, AvatarImage, AvatarFallback, AvatarBadge };

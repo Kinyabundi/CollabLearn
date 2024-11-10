@@ -86,7 +86,7 @@ const RepoCardItem = () => {
             <AlbumIcon className="w-5 h-5" />
             <span>
               <Link
-                to={"/app"}
+                to={`/app/view-project/ai-research-paper`}
                 className="hover:underline text-blue-500 font-semibold"
               >
                 AI Research Paper

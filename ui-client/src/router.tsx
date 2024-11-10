@@ -23,7 +23,7 @@ const router = createBrowserRouter([
         element: <NewProject/>,
       },
       {
-        path:"view-project",
+        path:"view-project/:slug",
         element: <ViewProject/>,
       },
     ],

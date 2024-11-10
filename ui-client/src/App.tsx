@@ -1,5 +1,7 @@
+import AppProvider from "./providers/AppProvider";
+
 const App = () => {
-  return <div>Welcome to App</div>;
+  return <AppProvider />;
 };
 
 export default App;

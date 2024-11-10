@@ -26,7 +26,9 @@ const OverviewScreen = () => {
       <TabsContent value="overview" className="px-[100px]">
         <OverviewTab />
       </TabsContent>
-      <TabsContent value="repos">Projects</TabsContent>
+      <TabsContent value="repos" className="px-[100px]">
+        <ProjectsTab />
+      </TabsContent>
       <TabsContent value="stars">Stars</TabsContent>
     </Tabs>
   );
@@ -36,37 +38,7 @@ const OverviewTab = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-10 gap-5 mt-5">
       <div className="col-span-3">
-        <Avatar className="w-80 h-80">
-          <AvatarImage src="https://github.com/shadcn.png" alt="shadcn" />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
-        <div className="mt-5"></div>
-        <h3 className="font-bold">Wallet Address</h3>
-        <div className="flex items-center gap-2 mt-2">
-          <p className="text-sm">
-            {getSlicedAddress("0x41a9dc633faFd6cfA50107eD7040a1c39b5e1319")}
-          </p>
-          <CopyToClipboardBtn
-            text="0x41a9dc633faFd6cfA50107eD7040a1c39b5e1319"
-            customToastText="Wallet Address Copied to clipboard"
-          />
-        </div>
-        <div className="mt-5"></div>
-        <h3 className="font-bold">Achievements</h3>
-        <div className="flex mt-2 items-center gap-2">
-          <Avatar className="w-12 h-12">
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
-          <Avatar className="w-12 h-12">
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
-          <Avatar className="w-12 h-12">
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
-        </div>
+        <SidebarContent />
       </div>
       <div className="col-span-7">
         <h1>Projects</h1>
@@ -74,6 +46,30 @@ const OverviewTab = () => {
           {[...Array.from({ length: 6 })].map((_, idx) => (
             <RepoCardItem key={idx} />
           ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProjectsTab = () => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-10 gap-5 mt-5">
+      <div className="col-span-3">
+        <SidebarContent />
+      </div>
+      <div className="col-span-7">
+        <div className="">
+          <input
+            className="px-2 py-1.5 outline-none border-2 border-gray-500 rounded-xl w-full focus:border-blue-700"
+            placeholder="Find project"
+          />
+        </div>
+        <div className="mt-5 space-y-4">
+          {[...Array.from({ length: 6 })].map((_, idx) => (
+            <ProjectItem key={idx} />
+          ))}
+          <ProjectItem />
         </div>
       </div>
     </div>
@@ -111,6 +107,68 @@ const RepoCardItem = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const ProjectItem = () => {
+  return (
+    <div className="py-6 border-y border-gray-300">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h3 className="text-blue-600 font-semibold">premium-converts</h3>
+          <Badge variant={"outline"}>Public</Badge>
+        </div>
+        <Button variant={"outline"} size={"sm"}>
+          <StarIcon className="w-4 h-4" />
+          Star
+        </Button>
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <Badge>Medicine</Badge>
+        <Badge>Agriculture</Badge>·
+        <div className="">
+          <p className="text-sm">Updated 4 days ago</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SidebarContent = () => {
+  return (
+    <>
+      <Avatar className="w-80 h-80">
+        <AvatarImage src="https://github.com/shadcn.png" alt="shadcn" />
+        <AvatarFallback>CN</AvatarFallback>
+      </Avatar>
+      <div className="mt-5"></div>
+      <h3 className="font-bold">Wallet Address</h3>
+      <div className="flex items-center gap-2 mt-2">
+        <p className="text-sm">
+          {getSlicedAddress("0x41a9dc633faFd6cfA50107eD7040a1c39b5e1319")}
+        </p>
+        <CopyToClipboardBtn
+          text="0x41a9dc633faFd6cfA50107eD7040a1c39b5e1319"
+          customToastText="Wallet Address Copied to clipboard"
+        />
+      </div>
+      <div className="mt-5"></div>
+      <h3 className="font-bold">Achievements</h3>
+      <div className="flex mt-2 items-center gap-2">
+        <Avatar className="w-12 h-12">
+          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+        <Avatar className="w-12 h-12">
+          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+        <Avatar className="w-12 h-12">
+          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+      </div>
+    </>
   );
 };
 

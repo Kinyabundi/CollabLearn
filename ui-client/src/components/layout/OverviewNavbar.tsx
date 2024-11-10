@@ -5,8 +5,13 @@ import { PlusIcon } from "lucide-react";
 import CopyToClipboardBtn from "../btns/CopyToClipboardBtn";
 import Web3Btn from "../btns/Web3Btn";
 import { useWeb3Context } from "@/context/Web3Provider";
+import { useNavigate } from "react-router-dom";
 
 const OverviewNavbar = () => {
+  const navigate = useNavigate();
+  const handleAddProject = () => {
+    navigate("/app/create-new-project"); 
+  };
   const {
     state: { isAuthenticated, address },
   } = useWeb3Context();
@@ -31,7 +36,7 @@ const OverviewNavbar = () => {
         )}
       </div>
       <div className="flex items-center gap-3">
-        <Button>
+        <Button onClick={handleAddProject}>
           <PlusIcon /> Add Project
         </Button>
         <Avatar className="border">

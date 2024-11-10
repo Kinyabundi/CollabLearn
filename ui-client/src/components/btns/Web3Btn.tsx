@@ -5,12 +5,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "../ui/button";
-import { CirclePlusIcon, GemIcon, LogOutIcon, ZapIcon } from "lucide-react";
+import { CirclePlusIcon, ZapIcon } from "lucide-react";
 import { useWeb3Context } from "@/context/Web3Provider";
 import { getSlicedAddress } from "@/utils";
 
-const iconClasses =
-  "text-xl text-default-500 pointer-events-none flex-shrink-0";
+// const iconClasses =
+//   "text-xl text-default-500 pointer-events-none flex-shrink-0";
 
 const Web3Btn = () => {
   const {

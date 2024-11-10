@@ -16,12 +16,12 @@ const NewProject = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-interface FormData {
-    projectName: string;
-    description: string;
-    visibility: string;
-    areaOfStudy: string;
-}
+// interface FormData {
+//     projectName: string;
+//     description: string;
+//     visibility: string;
+//     areaOfStudy: string;
+// }
 
 interface InputChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
 

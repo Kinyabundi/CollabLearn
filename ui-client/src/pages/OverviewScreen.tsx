@@ -1,3 +1,4 @@
+import { ABI } from "@/abi/projectABI";
 import CopyToClipboardBtn from "@/components/btns/CopyToClipboardBtn";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -5,10 +6,43 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWeb3Context } from "@/context/Web3Provider";
 import { getSlicedAddress } from "@/utils";
+import { ethers } from "ethers";
 import { AlbumIcon, BookOpen, StarIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+
 const OverviewScreen = () => {
+  const { state } = useWeb3Context();
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      // Get the network
+      const network = await provider.getNetwork();
+      console.log('Current Network:', network);
+
+      const contractAddress = "0xBe4A130015b50e2ea3Db14ED0516319B9fEac829";
+      const contract = new ethers.Contract(contractAddress, ABI, signer);
+
+      try {
+
+        const project = await contract.getResearchesByOwner(state.address);
+        console.log("here is projects", project)
+        setProjects(project)
+        console.log(projects)
+      } catch (err) {
+        console.error("Error fetching product details:", err);
+      }
+    };
+
+    fetchData();
+    const intervalId = setInterval(fetchData, 10000);
+    return () => clearInterval(intervalId);
+  }, []);
   return (
     <Tabs defaultValue="overview">
       <TabsList>
@@ -89,7 +123,7 @@ const RepoCardItem = () => {
                 to={`/app/view-project/ai-research-paper`}
                 className="hover:underline text-blue-500 font-semibold"
               >
-                AI Research Paper
+                AI Research
               </Link>
             </span>
           </div>
@@ -145,9 +179,8 @@ const SidebarContent = () => {
     <>
       <Avatar className="w-80 h-80 border">
         <AvatarImage
-          src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${
-            address ? "shadcn" : "Vivian"
-          }`}
+          src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${address ? "shadcn" : "Vivian"
+            }`}
           alt="shadcn"
         />
         <AvatarFallback>CN</AvatarFallback>

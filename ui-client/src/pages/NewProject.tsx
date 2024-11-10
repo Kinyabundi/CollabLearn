@@ -146,7 +146,7 @@ const NewProject = () => {
         </div>
 
         <div>
-          <Label htmlFor="description" className="font-semibold text-sm">Description *</Label>
+          <Label htmlFor="description" className="font-semibold text-sm">Description(ipfsHash) *</Label>
           <Input 
             id="description"
             value={formData.description}

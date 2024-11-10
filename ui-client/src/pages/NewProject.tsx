@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ethers } from 'ethers';
 import { Input } from "@/components/ui/input";
 import { Button } from '@/components/ui/button';
@@ -8,11 +8,14 @@ import { BookCheck, Lock } from 'lucide-react';
 import { ABI } from '@/abi/projectABI';
 import { toast } from 'sonner';
 import { useWeb3Context } from '@/context/Web3Provider';
+import { useNavigate } from 'react-router-dom';
 
-const MINIMUM_STAKE = ethers.parseEther("0.01"); // 0.01 ETH as minimum stake
+const MINIMUM_STAKE = ethers.parseEther("0.01"); 
 
 const NewProject = () => {
   const { state } = useWeb3Context();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     projectName: '',
     description: '',
@@ -62,13 +65,11 @@ const NewProject = () => {
       const contractAddress = "0xBe4A130015b50e2ea3Db14ED0516319B9fEac829";
       const contract = new ethers.Contract(contractAddress, ABI, signer);
 
-      // Generate a mock IPFS hash (in production, you'd upload to IPFS first)
-      const mockIpfsHash = "QmXyZ..."; // Replace with actual IPFS hash in production
-
+    
       // Log the parameters we're about to send
       console.log('Creating research with params:', {
         title: formData.projectName,
-        ipfsHash: mockIpfsHash,
+        ipfsHash: formData.description,
         requiredStake: MINIMUM_STAKE,
         owner: state.address
       });
@@ -86,7 +87,7 @@ const NewProject = () => {
       // Create research transaction
       const tx = await contract.createResearch(
         formData.projectName,         
-        mockIpfsHash,                 
+        formData.description,                 
         MINIMUM_STAKE,                
         state.address                
       );
@@ -106,6 +107,8 @@ const NewProject = () => {
       });
       
       toast.success('Project created successfully!');
+      navigate("/app"); 
+
     } catch (error: any) {
       console.error('Error creating project:', error);
       
@@ -129,7 +132,7 @@ const NewProject = () => {
         <div>
           <h2 className="text-2xl font-semibold text-gray-900">Create New Project</h2>
           <p className="text-sm italic text-gray-600">Required fields are marked with an asterisk (*)</p>
-          <p className="text-sm text-gray-600 mt-2">Minimum stake: 0.01 ETH</p>
+          <p className="text-sm text-gray-600 mt-2">Minimum stake: 0.01 EDU</p>
         </div>
 
         <div>

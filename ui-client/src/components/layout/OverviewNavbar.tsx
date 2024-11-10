@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { PlusIcon } from "lucide-react";
 import CopyToClipboardBtn from "../btns/CopyToClipboardBtn";
+import Web3Btn from "../btns/Web3Btn";
 
 const OverviewNavbar = () => {
   return (
@@ -28,6 +29,7 @@ const OverviewNavbar = () => {
           <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
           <AvatarFallback>CN</AvatarFallback>
         </Avatar>
+        <Web3Btn />
       </div>
     </div>
   );

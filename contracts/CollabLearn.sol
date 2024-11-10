@@ -14,8 +14,6 @@ contract ContributionNFT is ERC721 {
         _safeMint(to, tokenId);
     }
 }
-
-// Main platform contract
 contract CollabLearn is Ownable, ReentrancyGuard {
 
 constructor(
@@ -30,28 +28,28 @@ constructor(
 
     struct Research {
         string title;
-        string ipfsHash;  // Contains research data/paper
+        string ipfsHash; 
         address owner;
         bool isActive;
         uint256 contributorCount;
         uint256 citationCount;
-        uint256 requiredStake;    // Amount of EDU tokens needed to contribute
+        uint256 requiredStake;    
         mapping(address => bool) contributors;
-        mapping(uint256 => string) versions;  // version number => IPFS hash
-        mapping(address => uint256) stakes;   // Contributor => staked amount
+        mapping(uint256 => string) versions;  
+        mapping(address => uint256) stakes;  
         uint256 currentVersion;
     }
     
     struct Contribution {
         address contributor;
-        string ipfsHash;  // Contains contribution data
+        string ipfsHash;  
         uint256 timestamp;
         bool accepted;
         uint256 votes;
         uint256 stakedAmount;
     }
     
-    IERC20 public eduToken;  // Reference to EDU token
+    IERC20 public eduToken;  
     ContributionNFT public nft;
     
     mapping(uint256 => Research) public researches;
@@ -59,7 +57,7 @@ constructor(
     mapping(address => uint256) public reputationScores;
     
     uint256 public researchCount;
-    uint256 public constant MINIMUM_STAKE = 10**13;  
+    uint256 public constant MINIMUM_STAKE = 10**13; 
     
     event ResearchCreated(uint256 indexed id, string title, address owner, uint256 requiredStake);
     event ContributionSubmitted(uint256 indexed researchId, address contributor, uint256 stakedAmount);
@@ -74,7 +72,7 @@ constructor(
         string memory _ipfsHash,
         uint256 _requiredStake
     ) external returns (uint256) {
-        // require(_requiredStake > MINIMUM_STAKE, "Stake too low");
+        require(_requiredStake > MINIMUM_STAKE, "Stake too low");
         
         uint256 researchId = researchCount++;
         Research storage newResearch = researches[researchId];
@@ -122,7 +120,6 @@ constructor(
         require(reputationScores[msg.sender] > 0, "No reputation to vote");
         contributions[_researchId][_contributionId].votes++;
         
-        // Auto-accept if threshold met
         if (contributions[_researchId][_contributionId].votes >= 3) {
             acceptContribution(_researchId, _contributionId);
         }
@@ -185,15 +182,5 @@ constructor(
         research.versions[research.currentVersion] = research.ipfsHash;
         research.currentVersion++;
         research.ipfsHash = _newIpfsHash;
-    }
-
-
-    function approveEDUToken(uint256 amount) external returns (bool) {
-        require(amount > 0, "Amount must be greater than 0");
-        return eduToken.approve(address(this), amount);
-    }
-
-    function checkAllowance(address owner) external view returns (uint256) {
-        return eduToken.allowance(owner, address(this));
     }
 }

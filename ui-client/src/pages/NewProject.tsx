@@ -20,6 +20,7 @@ export default function NewProject() {
 
   const [form, setForm] = useState({
     name: '',
+    description: '',
     areaOfStudy: '',
     visibility: 'public'
   });
@@ -70,7 +71,7 @@ export default function NewProject() {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(
-        "0xBe4A130015b50e2ea3Db14ED0516319B9fEac829",
+        "0x72d62F5849B6F22Fe4000478355270b8e776D6Db",
         ABI,
         signer
       );
@@ -78,6 +79,7 @@ export default function NewProject() {
       const tx = await contract.createResearch(
         form.name,
         cid,
+        form.description,
         MINIMUM_STAKE,
         state.address
       );
@@ -102,6 +104,16 @@ export default function NewProject() {
         <Input
           value={form.name}
           onChange={(e) => setForm({...form, name: e.target.value})}
+          placeholder="Enter project name"
+        />
+      </div>
+
+      <div>
+        <Label>Description</Label>
+        <Input
+          value={form.description}
+          onChange={(e) => setForm({...form, description: e.target.value})}
+          placeholder="Enter project description"
         />
       </div>
 
@@ -142,6 +154,7 @@ export default function NewProject() {
         <Input
           value={form.areaOfStudy}
           onChange={(e) => setForm({...form, areaOfStudy: e.target.value})}
+          placeholder="Enter area of study"
         />
       </div>
 

@@ -5,7 +5,7 @@ import {  Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button'
 import { Download, Pencil } from 'lucide-react';
 import { ABI } from '@/abi/projectABI';
-import { fetchFromPinata } from '@/utils/pinata';
+import { fetchFromPinata, getPinataUrl } from '@/utils/pinata';
 import { toast } from 'sonner';
 
 interface ProjectData {
@@ -37,13 +37,11 @@ export default function ProjectContent() {
         const projectId = slug ? parseInt(slug) : 0;
         const research = await contract.researches(projectId);
 
-        console.log(research)
+        console.log("research", research)
         const data = await fetchFromPinata(research.ipfsHash);
 
-        console.log(data)
-
-
-        
+        console.log("data", data)
+        //@ts-ignore
         setProject(data);
       } catch (error) {
         toast.error('Failed to load project');
@@ -59,6 +57,8 @@ export default function ProjectContent() {
   if (loading) return <div className="p-4 text-center">Loading...</div>;
   if (!project) return <div className="p-4 text-center">Project not found</div>;
 
+  const ipfsHash = getPinataUrl(project.fileCid)
+
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       <div className="flex justify-between items-center">
@@ -70,7 +70,7 @@ export default function ProjectContent() {
         </h1>
         <div className="flex gap-2">
           <a 
-            href={getPinataUrl(project.fileCid)} 
+            href={ipfsHash} 
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -96,7 +96,7 @@ export default function ProjectContent() {
           <h2 className="font-semibold">Document</h2>
           <p>{project.file}</p>
           <a 
-            href={getPinataUrl(project.fileCid)} 
+            href={ipfsHash} 
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline"

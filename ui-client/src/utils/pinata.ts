@@ -34,6 +34,8 @@ export const fetchFromPinata = async (cid: string) => {
   try {
     // Using the gateway to fetch data
     const response = await pinata.gateways.public.get(cid);
+    console.log(response)
+    // console.log(url)
     return response;
   } catch (error) {
     console.error('Error fetching from Pinata:', error);
@@ -41,6 +43,15 @@ export const fetchFromPinata = async (cid: string) => {
   }
 };
 
-// export const getPinataUrl = (cid: string) => {
-//   return `https://${pinata.config.pinataGateway}/ipfs/${cid}`;
-// };
+export const getPinataUrl = async (cid: string) => {
+  try {
+    const response = await pinata.gateways.public.convert(cid);
+    console.log(response)
+
+    return response
+  } catch (error) {
+    console.error('Error fetching from Pinata:', error);
+    throw error;
+  }
+}
+

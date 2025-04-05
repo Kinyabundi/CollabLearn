@@ -6,22 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWeb3Context } from "@/context/Web3Provider";
 import { getSlicedAddress } from "@/utils";
+import { getPinataUrl } from "@/utils/pinata";
 import { ethers } from "ethers";
-import { AlbumIcon, BookOpen, StarIcon } from "lucide-react";
+import { AlbumIcon, BookOpen, StarIcon, UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-// Define the ResearchInfo type based on your contract
 type ResearchInfo = {
   id: number;
   title: string;
   ipfsHash: string;
+  description: string;
   owner: string;
   isActive: boolean;
   contributorCount: number;
   citationCount: number;
-  requiredStake: bigint;
+  requiredStake: string;
   currentVersion: number;
+  areaOfStudy?: string;
 };
 
 const OverviewScreen = () => {
@@ -38,30 +40,28 @@ const OverviewScreen = () => {
         setLoading(true);
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
-        const contractAddress = "0xBe4A130015b50e2ea3Db14ED0516319B9fEac829";
+        const contractAddress = "0x72d62F5849B6F22Fe4000478355270b8e776D6Db";
         const contract = new ethers.Contract(contractAddress, ABI, signer);
 
         // Fetch projects by owner
         const ownerProjects = await contract.getResearchesByOwner(state.address);
-        console.log("Owner projects:", ownerProjects);
+        console.log("Owner projects raw:", ownerProjects);
 
-        // Fetch all projects (if you want to show public projects)
-        const allProjects = await contract.getAllResearches();
-        console.log("All projects:", allProjects);
-
-        // Convert to ResearchInfo array and set state
+        // Convert to ResearchInfo array
         const formattedProjects = ownerProjects.map((project: any) => ({
           id: Number(project.id),
           title: project.title,
           ipfsHash: project.ipfsHash,
+          description: project.describtion || "", // Note: Typo in contract?
           owner: project.owner,
           isActive: project.isActive,
           contributorCount: Number(project.contributorCount),
           citationCount: Number(project.citationCount),
-          requiredStake: project.requiredStake,
+          requiredStake: ethers.formatEther(project.requiredStake.toString()),
           currentVersion: Number(project.currentVersion)
         }));
 
+        console.log("Formatted projects:", formattedProjects);
         setProjects(formattedProjects);
         setError(null);
       } catch (err) {
@@ -73,10 +73,11 @@ const OverviewScreen = () => {
     };
 
     fetchProjects();
-    const intervalId = setInterval(fetchProjects, 15000); // Refresh every 15 seconds
+    const intervalId = setInterval(fetchProjects, 15000);
     
     return () => clearInterval(intervalId);
   }, [state.address]);
+
 
   if (loading) {
     return (
@@ -93,6 +94,7 @@ const OverviewScreen = () => {
       </div>
     );
   }
+
 
   return (
     <Tabs defaultValue="overview">
@@ -208,27 +210,51 @@ const ProjectsTab = ({ projects }: { projects: ResearchInfo[] }) => {
 };
 
 const RepoCardItem = ({ project }: { project: ResearchInfo }) => {
+  const ipfsLink = getPinataUrl(project.ipfsHash);
+  
   return (
-    <div className="p-3 border rounded-lg">
-      <div className="flex justify-between">
-        <Link 
-          to={`/app/view-project/${project.id}`}
-          className="font-medium hover:underline"
-        >
-          {project.title}
-        </Link>
-        <Badge variant={project.isActive ? "default" : "secondary"}>
-          {project.isActive ? 'Active' : 'Inactive'}
-        </Badge>
+    <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <AlbumIcon className="w-5 h-5 text-gray-600" />
+            <Link 
+              to={`/app/view-project/${project.id}`}
+              className="font-medium text-blue-600 hover:underline"
+            >
+              {project.title}
+            </Link>
+            <Badge variant="outline" className="border-gray-300">
+              {project.isActive ? 'Public' : 'Private'}
+            </Badge>
+          </div>
+          
+          {/* Description */}
+          <p className="text-sm text-gray-600 mb-3">
+            {project.description || "No description provided"}
+          </p>
+          
+          {/* Metadata */}
+          <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="flex items-center gap-1">
+              <StarIcon className="w-4 h-4" />
+              <span>{project.citationCount}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <UsersIcon className="w-4 h-4" />
+              <span>{project.contributorCount}</span>
+            </div>
+            <Badge variant="secondary" className="capitalize">
+              {project.areaOfStudy || 'Uncategorized'}
+            </Badge>
+          </div>
+        </div>
+        
+        <Button variant="outline" size="sm" className="ml-2">
+          <StarIcon className="w-4 h-4 mr-2" />
+          Star
+        </Button>
       </div>
-      <a
-        href={`https://gateway.pinata.cloud/ipfs/${project.ipfsHash}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs text-blue-600 hover:underline block mt-1"
-      >
-        View on IPFS
-      </a>
     </div>
   );
 };

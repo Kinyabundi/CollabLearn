@@ -5,6 +5,7 @@ import OverviewLayout from "./layouts/OverviewLayout";
 import NewProject from "./pages/NewProject";
 import ViewProject from "./pages/ProjectContent";
 import NotFound from "./pages/NotFound";
+import EditorScreen from "./pages/EditorScreen";
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
       {
         path: "view-project/:slug",
         element: <ViewProject />,
+      },
+      {
+        path: "editor",
+        element: <EditorScreen />,
       },
     ],
   },

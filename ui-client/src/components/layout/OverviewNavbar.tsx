@@ -10,8 +10,13 @@ import { useNavigate } from "react-router-dom";
 const OverviewNavbar = () => {
   const navigate = useNavigate();
   const handleAddProject = () => {
-    navigate("/app/create-new-project"); 
+    navigate("/app/create-new-project");
   };
+
+  const goToOverview = () => {
+    navigate("/app");
+  };
+
   const {
     state: { isAuthenticated, address },
   } = useWeb3Context();
@@ -36,6 +41,7 @@ const OverviewNavbar = () => {
         )}
       </div>
       <div className="flex items-center gap-3">
+        <Button onClick={goToOverview}>Overview</Button>
         <Button onClick={handleAddProject}>
           <PlusIcon /> Add Project
         </Button>

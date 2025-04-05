@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { ethers } from 'ethers';
-import {  Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button'
-import { Download, Pencil } from 'lucide-react';
-import { ABI } from '@/abi/projectABI';
-import { fetchFromPinata, getPinataUrl } from '@/utils/pinata';
-import { toast } from 'sonner';
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { ethers } from "ethers";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download, Pencil } from "lucide-react";
+import { ABI } from "@/abi/projectABI";
+import { fetchFromPinata, getPinataUrl } from "@/utils/pinata";
+import { toast } from "sonner";
 
 interface ProjectData {
   name: string;
@@ -21,6 +21,7 @@ export default function ProjectContent() {
   const { slug } = useParams();
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [documentLink, setDocumentLink] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -29,7 +30,7 @@ export default function ProjectContent() {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
         const contract = new ethers.Contract(
-          "0xBe4A130015b50e2ea3Db14ED0516319B9fEac829",
+          "0x72d62F5849B6F22Fe4000478355270b8e776D6Db",
           ABI,
           signer
         );
@@ -37,14 +38,16 @@ export default function ProjectContent() {
         const projectId = slug ? parseInt(slug) : 0;
         const research = await contract.researches(projectId);
 
-        console.log("research", research)
-        const data = await fetchFromPinata(research.ipfsHash);
+        const data = await fetchFromPinata(research.ipfsHash)
 
-        console.log("data", data)
-        //@ts-ignore
-        setProject(data);
+        const rawData = data.data as unknown as ProjectData;
+
+        setProject(rawData);
+        const fileCid = rawData.fileCid;
+        const ipfsHash = await getPinataUrl(fileCid);
+        setDocumentLink(ipfsHash);
       } catch (error) {
-        toast.error('Failed to load project');
+        toast.error("Failed to load project");
         console.error(error);
       } finally {
         setLoading(false);
@@ -57,23 +60,17 @@ export default function ProjectContent() {
   if (loading) return <div className="p-4 text-center">Loading...</div>;
   if (!project) return <div className="p-4 text-center">Project not found</div>;
 
-  const ipfsHash = getPinataUrl(project.fileCid)
-
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           {project.name}
           <Badge variant="secondary">
-            {project.visibility === 'public' ? 'Public' : 'Private'}
+            {project.visibility === "public" ? "Public" : "Private"}
           </Badge>
         </h1>
         <div className="flex gap-2">
-          <a 
-            href={ipfsHash} 
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href={documentLink!} target="_blank" rel="noopener noreferrer">
             <Button variant="outline">
               <Download className="mr-2" />
               Download
@@ -95,8 +92,8 @@ export default function ProjectContent() {
         <div>
           <h2 className="font-semibold">Document</h2>
           <p>{project.file}</p>
-          <a 
-            href={ipfsHash} 
+          <a
+            href={documentLink!}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline"

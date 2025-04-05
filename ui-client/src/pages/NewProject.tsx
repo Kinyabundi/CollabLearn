@@ -1,207 +1,173 @@
-import React, { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ethers } from 'ethers';
 import { Input } from "@/components/ui/input";
 import { Button } from '@/components/ui/button';
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { BookCheck, Lock } from 'lucide-react';
+import { BookCheck, Lock, Upload, FileText } from 'lucide-react';
 import { ABI } from '@/abi/projectABI';
 import { toast } from 'sonner';
 import { useWeb3Context } from '@/context/Web3Provider';
 import { useNavigate } from 'react-router-dom';
+import { uploadFileToPinata, uploadJsonToPinata } from '@/utils/pinata';
 
-const MINIMUM_STAKE = ethers.parseEther("0.01"); 
+const MINIMUM_STAKE = ethers.parseEther("0.01");
 
-const NewProject = () => {
+export default function NewProject() {
   const { state } = useWeb3Context();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState({
-    projectName: '',
-    description: '',
-    visibility: 'public',
-    areaOfStudy: ''
+  const [form, setForm] = useState({
+    name: '',
+    areaOfStudy: '',
+    visibility: 'public'
   });
+  const [file, setFile] = useState<File | null>(null);
+  const [cid, setCid] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  interface InputChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
-
-  const handleInputChange = (e: InputChangeEvent) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [id]: value
-    }));
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) setFile(e.target.files[0]);
   };
 
-  const handleVisibilityChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      visibility: value
-    }));
-  };
+  const uploadFile = async () => {
+    if (!file) {
+      toast.error('Please select a file');
+      return;
+    }
 
-  const createProject = async () => {
     try {
-      // if (!state.isConnected || !state.address) {
-      //   toast.error('Please connect your wallet first');
-      //   return;
-      // }
-
-      if (!formData.projectName || !formData.description) {
-        toast.error('Please fill in all required fields');
-        return;
-      }
-
       setIsLoading(true);
+      const fileCid = await uploadFileToPinata(file);
       
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      const metadata = {
+        ...form,
+        file: file.name,
+        fileCid,
+        timestamp: new Date().toISOString()
+      };
       
-      // Get the network
-      const network = await provider.getNetwork();
-      console.log('Current Network:', network);
-
-      const contractAddress = "0xBe4A130015b50e2ea3Db14ED0516319B9fEac829";
-      const contract = new ethers.Contract(contractAddress, ABI, signer);
-
-    
-      // Log the parameters we're about to send
-      console.log('Creating research with params:', {
-        title: formData.projectName,
-        ipfsHash: formData.description,
-        requiredStake: MINIMUM_STAKE,
-        owner: state.address
-      });
-
-      // First check if the connected account is the owner
-      const contractOwner = await contract.owner();
-      console.log('Contract owner:', contractOwner);
-      console.log('Connected address:', state.address);
-
-      if (!state.address || contractOwner.toLowerCase() !== state.address.toLowerCase()) {
-        toast.error('Only the contract owner can create research projects');
-        return;
-      }
-
-      // Create research transaction
-      const tx = await contract.createResearch(
-        formData.projectName,         
-        formData.description,                 
-        MINIMUM_STAKE,                
-        state.address                
-      );
-      
-      console.log('Transaction sent:', tx.hash);
-      
-      // Wait for transaction to be mined
-      const receipt = await tx.wait();
-      console.log('Transaction confirmed:', receipt);
-      
-      // Clear form after successful creation
-      setFormData({
-        projectName: '',
-        description: '',
-        visibility: 'public',
-        areaOfStudy: ''
-      });
-      
-      toast.success('Project created successfully!');
-      navigate("/app"); 
-
-    } catch (error: any) {
-      console.error('Error creating project:', error);
-      
-      // More detailed error logging
-      if (error.reason) {
-        toast.error(`Transaction failed: ${error.reason}`);
-      } else if (error.message) {
-        toast.error(`Error: ${error.message}`);
-      } else {
-        toast.error('Failed to create project. Please try again.');
-      }
+      const metadataCid = await uploadJsonToPinata(metadata);
+      setCid(metadataCid);
+      toast.success('File uploaded to IPFS!');
+    } catch (error) {
+      toast.error('Upload failed');
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // JSX remains the same as before
+  const createProject = async () => {
+    if (!cid) {
+      toast.error('Please upload a file first');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(
+        "0xBe4A130015b50e2ea3Db14ED0516319B9fEac829",
+        ABI,
+        signer
+      );
+
+      const tx = await contract.createResearch(
+        form.name,
+        cid,
+        MINIMUM_STAKE,
+        state.address
+      );
+
+      await tx.wait();
+      toast.success('Project created!');
+      navigate('/app');
+    } catch (error) {
+      toast.error('Failed to create project');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
-      <div className="space-y-6 w-full max-w-2xl">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Create New Project</h2>
-          <p className="text-sm italic text-gray-600">Required fields are marked with an asterisk (*)</p>
-          <p className="text-sm text-gray-600 mt-2">Minimum stake: 0.01 EDU</p>
-        </div>
-
-        <div>
-          <Label htmlFor="projectName" className="font-semibold text-sm">Project Name *</Label>
-          <Input 
-            id="projectName" 
-            value={formData.projectName}
-            onChange={handleInputChange}
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="description" className="font-semibold text-sm">Description(ipfsHash) *</Label>
-          <Input 
-            id="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <RadioGroup 
-            value={formData.visibility}
-            onValueChange={handleVisibilityChange}
-            className="space-y-4"
-          >
-            <div className="flex items-center space-x-4">
-              <RadioGroupItem value="public" id="public" />
-              <BookCheck size={24} />
-              <div>
-                <Label htmlFor="public" className="font-bold">Public</Label>
-                <p className="text-sm text-gray-600">Anyone can see this project. You choose who can contribute.</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <RadioGroupItem value="private" id="private" />
-              <Lock size={24} />
-              <div>
-                <Label htmlFor="private" className="font-bold">Private</Label>
-                <p className="text-sm text-gray-600">You choose who can see and commit to this project.</p>
-              </div>
-            </div>
-          </RadioGroup>
-        </div>
-
-        <div>
-          <Label htmlFor="areaOfStudy" className="font-semibold text-sm">Area of Study *</Label>
-          <Input 
-            id="areaOfStudy"
-            value={formData.areaOfStudy}
-            onChange={handleInputChange}
-            className="mt-1"
-          />
-        </div>
-
-        <Button 
-          onClick={createProject} 
-          disabled={isLoading}
-          className="w-full"
-        >
-          {
-           isLoading ? 'Creating Project...' : 'Create Project'}
-        </Button>
+    <div className="max-w-2xl mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold">Create New Project</h1>
+      
+      <div>
+        <Label>Project Name</Label>
+        <Input
+          value={form.name}
+          onChange={(e) => setForm({...form, name: e.target.value})}
+        />
       </div>
+
+      <div>
+        <Label>Upload Document</Label>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1"
+          >
+            {file ? <FileText className="mr-2" /> : <Upload className="mr-2" />}
+            {file ? file.name : 'Select File'}
+          </Button>
+          <Button
+            onClick={uploadFile}
+            disabled={!file || isLoading}
+          >
+            Upload
+          </Button>
+        </div>
+      </div>
+
+      {cid && (
+        <div className="p-3 bg-gray-100 rounded">
+          <p className="text-sm font-mono break-all">CID: {cid}</p>
+        </div>
+      )}
+
+      <div>
+        <Label>Area of Study</Label>
+        <Input
+          value={form.areaOfStudy}
+          onChange={(e) => setForm({...form, areaOfStudy: e.target.value})}
+        />
+      </div>
+
+      <RadioGroup
+        value={form.visibility}
+        onValueChange={(v) => setForm({...form, visibility: v})}
+      >
+        <div className="flex items-center gap-3">
+          <RadioGroupItem value="public" />
+          <BookCheck />
+          <Label>Public</Label>
+        </div>
+        <div className="flex items-center gap-3">
+          <RadioGroupItem value="private" />
+          <Lock />
+          <Label>Private</Label>
+        </div>
+      </RadioGroup>
+
+      <Button
+        onClick={createProject}
+        disabled={!cid || isLoading}
+        className="w-full"
+      >
+        {isLoading ? 'Processing...' : 'Create Project'}
+      </Button>
     </div>
   );
-};
-
-export default NewProject;
+}

@@ -1,28 +1,115 @@
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Pencil } from "lucide-react"
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { ethers } from 'ethers';
+import {  Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button'
+import { Download, Pencil } from 'lucide-react';
+import { ABI } from '@/abi/projectABI';
+import { fetchFromPinata } from '@/utils/pinata';
+import { toast } from 'sonner';
 
-
-const ViewProject = () => {
-    return (
-        <div className="flex flex-col items-center mt-6 h-screen w-full">
-            <div className="max-w-4xl w-full">
-                <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-bold text-2xl">CollabLearn <Badge variant="secondary">Public</Badge>
-                    </h2>
-                    <Button className="bg-white hover:bg-gray-100 duration-200 transition-colors"> <Pencil className="text-gray-700" /></Button>
-                </div>
-                <hr className="border border-gray-300" />
-            </div>
-            <div className="px-3 max-w-4xl w-full mt-4">
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. At natus ab qui provident repellat, impedit molestias aliquid a id? Excepturi architecto enim esse, eaque id velit, fuga saepe itaque recusandae distinctio doloribus. Maxime id voluptas iure odio ipsam exercitationem reprehenderit eius quas necessitatibus quam quibusdam dolorum repellat non repudiandae, voluptatem pariatur, excepturi at atque optio dignissimos eum illum quidem accusantium assumenda. Labore delectus, quae voluptatem laboriosam pariatur aliquam minima? Esse quisquam ducimus rerum beatae sunt nam explicabo laborum asperiores mollitia soluta repellendus quis quo sapiente, magni neque dolor ut illum. Ducimus voluptatum illo non eos atque numquam vero culpa iste.</p>
-            <br />
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Eaque accusantium deleniti modi deserunt ipsa quisquam cupiditate praesentium, pariatur eum, dolore commodi libero nihil reprehenderit, possimus natus adipisci saepe expedita veniam illo reiciendis? Ea accusamus unde cum optio, iusto hic harum. Ipsam nihil distinctio deserunt provident, tempora, natus saepe, atque magnam iusto numquam modi illum a. Totam iste suscipit maiores, animi rerum veritatis ipsa pariatur fugiat asperiores autem quisquam fuga vel incidunt error in? Placeat, consectetur fugit doloribus enim minus, at, corporis nostrum quisquam repudiandae earum cumque! Placeat sint culpa aliquam saepe. Consectetur culpa aliquid itaque molestiae adipisci quasi qui totam?</p>
-            <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Cum veritatis nihil incidunt voluptates, laudantium officiis sit perferendis eos dolores. Quasi aut voluptatibus vitae voluptatem repellat quod enim, ipsum eveniet laudantium. Expedita ullam repellendus corporis repudiandae perspiciatis quo laboriosam laborum vero aut cumque sunt, consequatur consectetur officiis et qui delectus suscipit quis! Dolore maxime incidunt autem ullam tenetur itaque et voluptas architecto, soluta eaque? Rem totam unde autem fugiat distinctio iusto dolor inventore hic repellat, quis recusandae. Nesciunt, omnis. Sapiente necessitatibus rem aperiam exercitationem! Voluptatem, harum praesentium nobis molestiae magni, distinctio labore dignissimos officia aspernatur tempore impedit recusandae, maxime dolorem in.</p>
-            </div>
-
-        </div>
-    )
+interface ProjectData {
+  name: string;
+  file: string;
+  fileCid: string;
+  areaOfStudy: string;
+  visibility: string;
+  timestamp: string;
 }
 
-export default ViewProject
+export default function ProjectContent() {
+  const { slug } = useParams();
+  const [project, setProject] = useState<ProjectData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        setLoading(true);
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const contract = new ethers.Contract(
+          "0xBe4A130015b50e2ea3Db14ED0516319B9fEac829",
+          ABI,
+          signer
+        );
+
+        const projectId = slug ? parseInt(slug) : 0;
+        const research = await contract.researches(projectId);
+
+        console.log(research)
+        const data = await fetchFromPinata(research.ipfsHash);
+
+        console.log(data)
+
+
+        
+        setProject(data);
+      } catch (error) {
+        toast.error('Failed to load project');
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProject();
+  }, [slug]);
+
+  if (loading) return <div className="p-4 text-center">Loading...</div>;
+  if (!project) return <div className="p-4 text-center">Project not found</div>;
+
+  return (
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          {project.name}
+          <Badge variant="secondary">
+            {project.visibility === 'public' ? 'Public' : 'Private'}
+          </Badge>
+        </h1>
+        <div className="flex gap-2">
+          <a 
+            href={getPinataUrl(project.fileCid)} 
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline">
+              <Download className="mr-2" />
+              Download
+            </Button>
+          </a>
+          <Button variant="outline">
+            <Pencil className="mr-2" />
+            Edit
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-semibold">Area of Study</h2>
+          <p>{project.areaOfStudy}</p>
+        </div>
+
+        <div>
+          <h2 className="font-semibold">Document</h2>
+          <p>{project.file}</p>
+          <a 
+            href={getPinataUrl(project.fileCid)} 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            View on IPFS
+          </a>
+        </div>
+
+        <div>
+          <h2 className="font-semibold">Created</h2>
+          <p>{new Date(project.timestamp).toLocaleString()}</p>
+        </div>
+      </div>
+    </div>
+  );
+}

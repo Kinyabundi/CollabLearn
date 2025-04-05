@@ -5,39 +5,39 @@ import OverviewLayout from "./layouts/OverviewLayout";
 import NewProject from "./pages/NewProject";
 import ViewProject from "./pages/ProjectContent";
 import NotFound from "./pages/NotFound";
-import EditorScreen from "./pages/EditorScreen";
+import EditProjectDocument from "./pages/EditProjectDocument";
 
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <LandingPage />,
-  },
-  {
-    path: "app",
-    element: <OverviewLayout />,
-    children: [
-      {
-        path: "",
-        element: <OverviewScreen />,
-      },
-      {
-        path: "create-new-project",
-        element: <NewProject />,
-      },
-      {
-        path: "view-project/:slug",
-        element: <ViewProject />,
-      },
-      {
-        path: "editor",
-        element: <EditorScreen />,
-      },
-    ],
-  },
-  {
-    path: "*",
-    element: <NotFound />,
-  },
+	{
+		path: "/",
+		element: <LandingPage />,
+	},
+	{
+		path: "app",
+		element: <OverviewLayout />,
+		children: [
+			{
+				path: "",
+				element: <OverviewScreen />,
+			},
+			{
+				path: "create-new-project",
+				element: <NewProject />,
+			},
+			{
+				path: "view-project/:slug",
+				element: <ViewProject />,
+			},
+			{
+				path: "edit-project-document/:slug",
+				element: <EditProjectDocument />,
+			},
+		],
+	},
+	{
+		path: "*",
+		element: <NotFound />,
+	},
 ]);
 
 export default router;

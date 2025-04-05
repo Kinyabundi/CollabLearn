@@ -29,7 +29,7 @@ const useWeb3Provider = () => {
 
       if (!ethereum) {
         toast.error("Please install Metamask!");
-        return;
+        return null
       }
 
       const provider = new BrowserProvider(ethereum);
@@ -54,8 +54,17 @@ const useWeb3Provider = () => {
         toast.success("Wallet connected");
 
         localStorage.setItem("isAuthenticated", "true");
+
+        return accounts[0];
       }
-    } catch (err) {}
+
+      toast.error("No accounts found");
+      return null;
+    } catch (err) {
+      console.error("Error connecting wallet:", err);
+      toast.error("Failed to connect wallet");
+      return null;
+    }
   }, [web3State]);
 
   const disconnectWallet = () => {

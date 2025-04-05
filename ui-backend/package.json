@@ -22,7 +22,9 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@liveblocks/node": "^2.22.3",
     "concurrently": "^9.1.2",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "mammoth": "^1.9.0",
     "morgan": "^1.10.0",

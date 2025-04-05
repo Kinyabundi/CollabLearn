@@ -6,16 +6,16 @@ import { RouterProvider } from "react-router-dom";
 import LiveblockProvider from "./LiveblockProvider";
 
 const AppProvider = () => {
-  return (
-    <HelmetProvider>
-      <Web3ContextProvider>
-        <LiveblockProvider>
-          <RouterProvider router={router} />
-        </LiveblockProvider>
-      </Web3ContextProvider>
-      <Toaster />
-    </HelmetProvider>
-  );
+	return (
+		<HelmetProvider>
+			<Web3ContextProvider>
+				<LiveblockProvider>
+					<RouterProvider router={router} />
+				</LiveblockProvider>
+			</Web3ContextProvider>
+			<Toaster />
+		</HelmetProvider>
+	);
 };
 
 export default AppProvider;

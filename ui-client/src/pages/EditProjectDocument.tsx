@@ -37,6 +37,7 @@ const EditProjectDocument = () => {
 			const html = DOMPurify.sanitize(htmlContent);
 			setInitialContent(html);
 		} catch (err) {
+      console.log
             toast.error("Failed to convert file");
             console.error("Error converting file:", err);
         }

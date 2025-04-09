@@ -1,3 +1,4 @@
+// src/pages/NewProject.tsx
 import { useState, useRef } from 'react';
 import { ethers } from 'ethers';
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,10 @@ export default function NewProject() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) setFile(e.target.files[0]);
+    if (e.target.files?.[0]) {
+      setFile(e.target.files[0]);
+      setCid(''); // Reset CID when new file is selected
+    }
   };
 
   const uploadFile = async () => {
@@ -40,17 +44,23 @@ export default function NewProject() {
 
     try {
       setIsLoading(true);
+      
+      // Upload the original file to IPFS
       const fileCid = await uploadFileToPinata(file);
       
+      // Create metadata including file info
       const metadata = {
         ...form,
-        file: file.name,
+        originalFilename: file.name,
+        fileType: file.type,
         fileCid,
         timestamp: new Date().toISOString()
       };
       
+      // Upload metadata to IPFS
       const metadataCid = await uploadJsonToPinata(metadata);
       setCid(metadataCid);
+      
       toast.success('File uploaded to IPFS!');
     } catch (error) {
       toast.error('Upload failed');
@@ -125,6 +135,7 @@ export default function NewProject() {
             ref={fileInputRef}
             onChange={handleFileChange}
             className="hidden"
+            accept=".docx,.doc,.pdf,.txt"
           />
           <Button
             variant="outline"

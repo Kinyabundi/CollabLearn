@@ -13,10 +13,10 @@ export type TProjectResearch = {
 };
 
 export type TReseachItem = {
-  name: string;
-  file: string;
   fileCid: string;
-  areaOfStudy: string;
-  visibility: string;
-  timestamp: string;
+  originalFilename?: string;
+  fileType?: string;
+  areaOfStudy?: string;
+  visibility?: string;
+  timestamp?: string;
 };

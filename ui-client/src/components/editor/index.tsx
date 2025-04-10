@@ -8,6 +8,7 @@ import NotificationsPopover from "../popovers/notifications-popover";
 
 interface TextEditorProps {
 	initialContent?: string;
+	// onMount: ()=> void;
 }
 
 export default function TextEditor({ initialContent }: TextEditorProps) {

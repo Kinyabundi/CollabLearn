@@ -75,11 +75,11 @@ const LandingPage = () => {
             </div>
             <div className="md:w-1/2">
               <div className="bg-gradient-to-br from-blue-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 rounded-xl p-8 shadow-xl">
-                <img 
+                {/* <img 
                   src="/collaboration-illustration.svg" 
                   alt="Collaboration" 
                   className="w-full h-64 object-contain"
-                />
+                /> */}
               </div>
             </div>
           </div>

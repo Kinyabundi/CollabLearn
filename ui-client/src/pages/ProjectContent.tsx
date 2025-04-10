@@ -10,15 +10,16 @@ import { Download, Pencil, FileText, Calendar, Bookmark, Eye, ExternalLink } fro
 import { ABI } from "@/abi/projectABI";
 import { fetchFromPinata, getPinataUrl } from "@/utils/pinata";
 import { toast } from "sonner";
+import DOMPurify from "dompurify";
 
 interface ProjectData {
   name: string;
-  originalFilename: string;
-  fileType: string;
+  originalFilename?: string; // Make optional since it might be missing
+  fileType?: string;
   fileCid: string;
-  areaOfStudy: string;
-  visibility: string;
-  timestamp: string;
+  areaOfStudy?: string;
+  visibility?: string;
+  timestamp?: string;
 }
 
 export default function ProjectContent() {
@@ -26,10 +27,57 @@ export default function ProjectContent() {
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [documentLink, setDocumentLink] = useState<string | null>(null);
+  const [convertedHtml, setConvertedHtml] = useState<string | null>(null);
+  const [fileExtension, setFileExtension] = useState<string>(""); // Track file extension separately
   const navigate = useNavigate();
 
   const onClickEdit = () => {
     navigate(`/app/edit-project-document/${slug}`);
+  };
+
+  const convertDocxToHtml = async (url: string) => {
+    try {
+      // Fetch the file content from IPFS
+      const response = await fetch(url);
+      const blob = await response.blob();
+      
+      // Create a FormData object with the file
+      const formData = new FormData();
+      const filename = project?.originalFilename || `document.${fileExtension || 'docx'}`;
+      formData.append("file", blob, filename);
+      
+      // Send to your conversion endpoint
+      const convertResponse = await fetch("http://localhost:4411/convert", {
+        method: "POST",
+        body: formData
+      });
+      
+      if (!convertResponse.ok) {
+        throw new Error("Failed to convert file");
+      }
+      
+      const data = await convertResponse.json();
+      const htmlContent = data.data;
+      const sanitizedHtml = DOMPurify.sanitize(htmlContent);
+      setConvertedHtml(sanitizedHtml);
+    } catch (error) {
+      console.error("Error converting file:", error);
+      toast.error("Failed to convert document for preview");
+    }
+  };
+
+  const detectFileTypeFromContentType = (contentType: string | null) => {
+    if (contentType?.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+      return 'docx';
+    } else if (contentType?.includes('application/msword')) {
+      return 'doc';
+    } else if (contentType?.includes('application/pdf')) {
+      return 'pdf';
+    } else if (contentType?.includes('text/plain')) {
+      return 'txt';
+    } else {
+      return 'unknown';
+    }
   };
 
   useEffect(() => {
@@ -43,19 +91,38 @@ export default function ProjectContent() {
           ABI,
           signer
         );
-
+  
         const projectId = slug ? parseInt(slug) : 0;
         const research = await contract.researches(projectId);
-
-        console.log(research)
-
         const data = await fetchFromPinata(research.ipfsHash);
         const rawData = data.data as unknown as ProjectData;
-
+  
         setProject(rawData);
         const fileCid = rawData.fileCid;
-        const ipfsHash = await getPinataUrl(fileCid);
-        setDocumentLink(ipfsHash);
+  
+        const fileUrl = await getPinataUrl(fileCid);
+        const fileResponse = await fetch(fileUrl);
+        if (!fileResponse.ok) throw new Error("Failed to fetch document");
+        const contentType = fileResponse.headers.get('Content-Type');
+        const fileBlob = await fileResponse.blob();
+        setFileExtension(detectFileTypeFromContentType(contentType));
+
+        const formData = new FormData();
+        formData.append("file", fileBlob, rawData.originalFilename || `document.${fileExtension}`);
+        const convertResponse = await fetch("http://localhost:4411/convert", {
+          method: "POST",
+          body: formData,
+        });
+  
+        if (!convertResponse.ok) throw new Error("Conversion failed");
+        const { data: htmlContent } = await convertResponse.json();
+        const sanitizedHtml = DOMPurify.sanitize(htmlContent);
+        setConvertedHtml(sanitizedHtml);
+  
+        // Create HTML blob URL for preview
+        const htmlBlob = new Blob([sanitizedHtml], { type: "text/html" });
+        const htmlUrl = URL.createObjectURL(htmlBlob);
+        setDocumentLink(htmlUrl);
       } catch (error) {
         toast.error("Failed to load project");
         console.error(error);
@@ -63,8 +130,12 @@ export default function ProjectContent() {
         setLoading(false);
       }
     };
-
+  
     fetchProject();
+  
+    return () => {
+      if (documentLink) URL.revokeObjectURL(documentLink);
+    };
   }, [slug]);
 
   if (loading) {
@@ -114,6 +185,11 @@ export default function ProjectContent() {
     );
   }
 
+  // Using the fileExtension state instead of checking originalFilename directly
+  const isDocFile = fileExtension === 'docx' || fileExtension === 'doc';
+  const isPdfFile = fileExtension === 'pdf';
+  const isTextFile = fileExtension === 'txt';
+
   return (
     <div className="w-full mx-auto p-6">
       <div className="bg-white rounded-lg shadow mb-6">
@@ -122,7 +198,7 @@ export default function ProjectContent() {
             <h1 className="text-2xl font-bold">{project.name}</h1>
             <Badge className="capitalize" variant={project.visibility === "public" ? "default" : "secondary"}>
               <Eye className="mr-1 h-3 w-3" />
-              {project.visibility}
+              {project.visibility || "public"}
             </Badge>
           </div>
           <div className="flex gap-2">
@@ -153,19 +229,21 @@ export default function ProjectContent() {
               <CardContent className="space-y-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Area of Study</h3>
-                  <p className="font-medium">{project.areaOfStudy}</p>
+                  <p className="font-medium">{project.areaOfStudy || "Not specified"}</p>
                 </div>
                 <Separator />
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">File Name</h3>
-                  <p className="font-medium">{project.originalFilename}</p>
+                  <p className="font-medium">
+                    {project.originalFilename || `Document.${fileExtension || 'unknown'}`}
+                  </p>
                 </div>
                 <Separator />
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Created</h3>
                   <p className="flex items-center">
                     <Calendar className="mr-2 h-4 w-4 text-gray-400" />
-                    {new Date(project.timestamp).toLocaleString()}
+                    {project.timestamp ? new Date(project.timestamp).toLocaleString() : "Unknown"}
                   </p>
                 </div>
                 {documentLink && (
@@ -197,11 +275,29 @@ export default function ProjectContent() {
               <CardContent>
                 {documentLink ? (
                   <div className="border rounded-md overflow-hidden bg-gray-50">
-                    <iframe
-                      src={documentLink}
-                      className="w-full h-96"
-                      title="Document Preview"
-                    />
+                    {/* For Word documents, show the converted HTML */}
+                    {isDocFile && convertedHtml ? (
+                      <div 
+                        className="w-full h-96 overflow-auto p-4"
+                        dangerouslySetInnerHTML={{ __html: convertedHtml }}
+                      />
+                    ) : isPdfFile ? (
+                      <iframe
+                        src={documentLink}
+                        className="w-full h-96"
+                        title="Document Preview"
+                      />
+                    ) : isTextFile ? (
+                      <iframe
+                        src={documentLink}
+                        className="w-full h-96"
+                        title="Document Preview"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-96 bg-gray-50 rounded-md border">
+                        <p className="text-gray-500">Preview not available for this file type. <a href={documentLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Download the file</a> to view it.</p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-96 bg-gray-50 rounded-md border">
